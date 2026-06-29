@@ -2,14 +2,15 @@
 
 REST API untuk sistem perpustakaan menggunakan Go, Gin, GORM, MySQL, JWT, dan bcrypt.
 
-## Fitur
+## Fitur Utama
 
+- Autentikasi user menggunakan JWT
 - Register dan login user
-- Autentikasi menggunakan JWT Bearer Token
-- Endpoint profil user yang sedang login
-- CRUD dasar user yang sudah tersedia sebagian
-- Migration database untuk user, buku, kategori, status buku, dan peminjaman buku
+- Manajemen profil user
+- Struktur service, repository, controller, dan route yang terpisah
+- Migration database menggunakan GORM
 - Seeder admin default
+- Persiapan dokumentasi API menggunakan Swagger
 
 ## Tech Stack
 
@@ -20,19 +21,18 @@ REST API untuk sistem perpustakaan menggunakan Go, Gin, GORM, MySQL, JWT, dan bc
 - JWT
 - bcrypt
 - godotenv
+- Air untuk hot reload
 
 ## Struktur Project
 
 ```txt
 .
 |-- app/                         # Setup router dan dependency injection
-|-- documentation/               # ERD dan dokumentasi database
+|-- documentation/               # ERD dan dokumentasi tambahan
 |-- src/
 |   |-- config/                  # Konfigurasi env dan database
 |   |-- controllers/             # Handler HTTP
-|   |-- database/
-|   |   |-- migrations/          # Model GORM
-|   |   `-- seeders/             # Seeder awal
+|   |-- database/                # Migration dan seeder
 |   |-- middleware/              # Middleware JWT
 |   |-- repository/              # Query database
 |   |-- routes/                  # Definisi route
@@ -85,14 +85,6 @@ Jalankan migration dan seeder:
 go run ./src/database
 ```
 
-Seeder akan membuat admin default:
-
-```txt
-email: admin@admin.com
-password: admin123
-role: admin
-```
-
 Jalankan server:
 
 ```bash
@@ -107,160 +99,28 @@ http://localhost:8080
 
 Port mengikuti nilai `APP_PORT` di `.env`.
 
-## Autentikasi
-
-Endpoint yang dilindungi membutuhkan header:
-
-```http
-Authorization: Bearer <token>
-```
-
-Token didapat dari endpoint login.
-
-## Endpoint
-
-Base URL:
-
-```txt
-/api
-```
-
-### Auth
-
-| Method | Endpoint | Auth | Deskripsi |
-| --- | --- | --- | --- |
-| POST | `/auth/registerUmum` | Tidak | Register user umum |
-| POST | `/auth/login` | Tidak | Login dan mendapatkan token |
-| GET | `/auth/me` | Ya | Mengambil data user yang sedang login |
-
-### User
-
-| Method | Endpoint | Auth | Deskripsi |
-| --- | --- | --- | --- |
-| GET | `/user/` | Tidak | Mengambil semua user |
-| GET | `/user/:id` | Tidak | Mengambil user berdasarkan ID |
-| PUT | `/user/profile` | Ya | Update profil user yang sedang login |
-| DELETE | `/user/:id` | Ya | Hapus user berdasarkan ID |
-
-Catatan: beberapa aksi user melakukan pengecekan role di service. Role `admin` dan `petugas` memiliki akses lebih tinggi untuk operasi tertentu.
-
-## Contoh Request
-
-### Register User Umum
-
-```http
-POST /api/auth/registerUmum
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "User Umum",
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-### Login
-
-```http
-POST /api/auth/login
-Content-Type: application/json
-```
-
-```json
-{
-  "email": "admin@admin.com",
-  "password": "admin123"
-}
-```
-
-Contoh response:
-
-```json
-{
-  "message": "login berhasil",
-  "success": true,
-  "token": "<jwt-token>"
-}
-```
-
-### Me
-
-```http
-GET /api/auth/me
-Authorization: Bearer <jwt-token>
-```
-
-### Update Profile
-
-```http
-PUT /api/user/profile
-Authorization: Bearer <jwt-token>
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "Nama Baru",
-  "email": "nama.baru@example.com",
-  "password": "passwordbaru"
-}
-```
-
-### Get All Users
-
-```http
-GET /api/user/
-```
-
-### Get User By ID
-
-```http
-GET /api/user/1
-```
-
-### Delete User
-
-```http
-DELETE /api/user/1
-Authorization: Bearer <jwt-token>
-```
-
-## Model Database
-
-Migration yang tersedia:
-
-- `User`
-- `Book`
-- `Category`
-- `BookStatus`
-- `BookLoan`
-
-Relasi utama:
-
-- `Book` memiliki `Category`
-- `Book` memiliki `BookStatus`
-- `BookLoan` memiliki `User`
-- `BookLoan` memiliki `Book`
-
 ## Development
 
-Menjalankan test/compile check:
+Menjalankan compile check:
 
 ```bash
 go test ./...
 ```
 
-Jika menggunakan Air untuk hot reload:
+Menjalankan server dengan hot reload:
 
 ```bash
 go tool air
 ```
+
+## Dokumentasi
+
+- Schema database: [`src/database/README.md`](src/database/README.md)
+- ERD: folder [`documentation`](documentation)
+- Dokumentasi endpoint akan menggunakan Swagger.
 
 ## Catatan
 
 - Password user disimpan dalam bentuk hash menggunakan bcrypt.
 - JWT berlaku selama 24 jam.
 - File `.env` wajib tersedia karena konfigurasi database dan JWT dibaca dari environment.
-- Dokumentasi ERD tersedia di folder `documentation/`.
